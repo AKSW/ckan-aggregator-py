@@ -53,5 +53,10 @@ docs/_build/
 # PyBuilder
 target/
 
+# VIM
+*.swp
+*.swo
+
 # Project related
 ckanaggregatorpy/pdeu/__init__.py
+data/
