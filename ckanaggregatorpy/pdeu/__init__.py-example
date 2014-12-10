@@ -1,4 +1,8 @@
-ckan_api_url='http://publicdata.eu/api'
-ckan_api_key='YOURKEYHERE'
-ckan = CkanClient(base_location=ckan_api_url,
-                  api_key=ckan_api_key)
+import os.path
+from ckanclient import CkanClient
+
+cacheFolder=os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../data/pdeu"))
+ckanApiUrl='http://publicdata.eu/api'
+ckanApiKey='YOURKEYHERE'
+ckanClient = CkanClient(base_location=ckanApiUrl,
+                  api_key=ckanApiKey)
