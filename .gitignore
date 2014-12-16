@@ -59,4 +59,5 @@ target/
 
 # Project related
 ckanaggregatorpy/pdeu/__init__.py
+ckanaggregatorpy/datahubio/__init__.py
 data/

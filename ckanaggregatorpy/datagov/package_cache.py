@@ -1,6 +1,8 @@
 import os.path
 import time
 import requests
+from bs4 import BeautifulSoup
+import re
 
 try:
     import cPickle as pickle
@@ -8,57 +10,19 @@ except:
     import pickle
 
 import ckanaggregatorpy.datagov as datagov
+import ckanaggregatorpy.interfaces
 
-class PackageCache(object):
-    packageListFile = os.path.join(datagov.cacheFolder, "packageList.dump")
-    packagesFolder = os.path.join(datagov.cacheFolder, "packages")
+class PackageCache(ckanaggregatorpy.interfaces.PackageCacheInterface):
+    cacheFolder = datagov.cacheFolder
     pagesFolder = os.path.join(datagov.cacheFolder, "pages")
     datagovPageUrl = "http://catalog.data.gov/dataset?page="
     datagovNumberOfPages = 6705 # this number has to be updated manually
+    ckanClient = datagov.ckanClient
+    prefix = "datagov"
+    ckanApiUrl = datagov.ckanApiUrl
 
     def __init__(self):
-        self.ckanClient = datagov.ckanClient
-
-    def getPackages(self):
-        pass
-
-    def updatePackages(self):
-        packageList = self.getPackageList()
-        numberOfPackages = len(packageList)
-        for num, packageId in enumerate(packageList):
-            print("Fetching package %d out of %d" % (num + 1, numberOfPackages))
-            packageFile = os.path.join(self.packagesFolder, packageId)
-            if(os.path.exists(packageFile)):
-                print("Package %s already exists in the cache" % packageId)
-                continue
-            try:
-                package = self.ckanClient.package_entity_get(packageId)
-                self.saveFile(packageFile, package)
-            except BaseException as e:
-                print("Could not fetch %s because of %s" % (packageId, str(e)))
-
-    def getPackageList(self):
-        if(self.isPackageListOutdated()):
-            self.updatePackageList()
-            return self.loadFile(self.packageListFile)
-        else:
-            return self.loadFile(self.packageListFile)
-
-    def saveFile(self, filepath, obj):
-        #provide full path to the file as filepath and obj to save
-        try:
-            file = open(filepath, 'wb')
-            pickle.dump(obj, file, protocol=pickle.HIGHEST_PROTOCOL)
-            file.close()
-        except BaseException as e:
-            print("Could not save the file %s because %s" % (filepath, str(e)))
-
-    def loadFile(self, filepath):
-        #provide full path to the file as filepath
-        file = open(filepath, 'rb')
-        obj = pickle.load(file)
-        file.close()
-        return obj
+        super(self.__class__, self).__init__()
 
     def updatePackageList(self):
         """
@@ -88,7 +52,7 @@ class PackageCache(object):
             for dataset in soup.find_all(href=re.compile("dataset/")):
                 datasetIds.append(dataset["href"].split("/")[-1])
          
-        self.saveFile(packageListFile, datasetIds)
+        self.saveFile(self.packageListFile, datasetIds)
             
     def updateDataGovPages(self):
         """
@@ -100,6 +64,7 @@ class PackageCache(object):
             pageUrl = self.datagovPageUrl+str(i)
             if(os.path.isfile(pageFile)):
                 print("Page %s is already fetched, skipping." % pageUrl)
+                continue
             r = requests.get(pageUrl)
             assert r.status_code == requests.status_codes.codes.OK
             f = open(pageFile, "w")
@@ -107,29 +72,10 @@ class PackageCache(object):
             f.close()
             time.sleep(0.5)
 
-    def isPackageListOutdated(self):
-        #Does not exist
-        if(not os.path.isfile(self.packageListFile)):
-            print("%s does not exists!" % self.packageListFile)
-            return True
-
-        #Is older than 1 week (all functions are in seconds)
-        packageListAge = time.time() - os.path.getmtime(self.packageListFile)
-        week = 604800 #seconds
-        if(packageListAge > week):
-            print("%s is older than a week!" % self.packageListFile)
-            return True
-
-        #File empty (corrupted?)
-        if(os.stat(self.packageListFile).st_size == 0):
-            print("%s is empty!" % self.packageListFile)
-            return True
-
-        return False
-
 if __name__ == "__main__":
     packageCache = PackageCache()
-    pkgList = packageCache.getPackageList()
+    #pkgList = packageCache.getPackageList()
     #packageCache.updatePackages()
+    rdfPackages = packageCache.getRdfPackages()
     import ipdb; ipdb.set_trace()
     print "hi"
