@@ -2,6 +2,10 @@ import ckanaggregatorpy.datagov.package_cache
 import ckanaggregatorpy.datahubio.package_cache
 import ckanaggregatorpy.pdeu.package_cache
 
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 class CkanQuery(object):
     ckanCaches = [
@@ -18,11 +22,18 @@ class CkanQuery(object):
             rdfpackages = ckanCache.getRdfPackagesRdfResourcesOnly()
             prefix = ckanCache.prefix
             ckanApiUrl = ckanCache.ckanApiUrl
+            #Prefixes are mapped to name in ckan_catalog table in LODStats_WWW
             results.append({'rdfpackages': rdfpackages, 'prefix': prefix, 'ckanApiUrl': ckanApiUrl})
         return results
 
+    def dumpRdfPackagesRdfResourcesOnly(self, path='/tmp/ckan_catalogs.pickled'):
+        rdfPackages = ckanQuery.getRdfPackagesRdfResourcesOnly()
+        file = open(path, 'wb')
+        pickle.dump(rdfPackages, file, protocol=pickle.HIGHEST_PROTOCOL)
+        file.close()
+
 if __name__ == "__main__":
     ckanQuery = CkanQuery()
-    ckanQuery.getRdfPackagesRdfResourcesOnly()
-    import ipdb; ipdb.set_trace()
-    print "hi"
+    #rdfPackages = ckanQuery.getRdfPackagesRdfResourcesOnly()
+    ckanQuery.dumpRdfPackagesRdfResourcesOnly()
+    print "done"
