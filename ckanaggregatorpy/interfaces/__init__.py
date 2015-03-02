@@ -32,6 +32,8 @@ class PackageCacheInterface(object):
             for num, resource in enumerate(rdfPackage['resources']):
                 if(not resource['format'] in rdfFormats):
                     rdfPackage['resources'][num] = None
+                else:
+                    rdfPackage['resources'][num]['format'] = self.normalizeFormat(resource['format'])
         self.saveFile(self.rdfPackagesRdfResourcesOnlyFile, rdfPackages)
 
     def getRdfPackages(self):
@@ -123,3 +125,17 @@ class PackageCacheInterface(object):
             return True
 
         return False
+
+    def normalizeFormat(self, format):
+        if(format in ckanaggregatorpy.assets.formats.RDF_N3):
+            return 'n3'
+        elif(format in ckanaggregatorpy.assets.formats.RDF_TTL):
+            return 'ttl'
+        elif(format in ckanaggregatorpy.assets.formats.RDF_NT):
+            return 'nt'
+        elif(format in ckanaggregatorpy.assets.formats.RDF_XML):
+            return 'rdf'
+        elif(format in ckanaggregatorpy.assets.formats.RDF_SPARQL):
+            return 'sparql'
+        else:
+            return 'rdf'

@@ -26,6 +26,16 @@ class CkanQuery(object):
             results.append({'rdfpackages': rdfpackages, 'prefix': prefix, 'ckanApiUrl': ckanApiUrl})
         return results
 
+    def getRdfPackagesRdfResourcesOnlyNormalized(self):
+        results = []
+        for ckanCache in self.ckanCaches:
+            rdfpackages = ckanCache.getRdfPackagesRdfResourcesOnly()
+            prefix = ckanCache.prefix
+            ckanApiUrl = ckanCache.ckanApiUrl
+            #Prefixes are mapped to name in ckan_catalog table in LODStats_WWW
+            results.append({'rdfpackages': rdfpackages, 'prefix': prefix, 'ckanApiUrl': ckanApiUrl})
+        return results
+
     def dumpRdfPackagesRdfResourcesOnly(self, path='/tmp/ckan_catalogs.pickled'):
         rdfPackages = ckanQuery.getRdfPackagesRdfResourcesOnly()
         file = open(path, 'wb')
