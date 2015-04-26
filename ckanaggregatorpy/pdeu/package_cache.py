@@ -8,6 +8,7 @@ class PackageCache(ckanaggregatorpy.interfaces.PackageCacheInterface):
     ckanClient = pdeu.ckanClient
     prefix = "pdeu"
     ckanApiUrl = pdeu.ckanApiUrl
+    ckanBaseUrl = pdeu.ckanBaseUrl
 
     def __init__(self):
         super(self.__class__, self).__init__()
@@ -16,5 +17,6 @@ if __name__ == "__main__":
     packageCache = PackageCache()
     #pkgList = packageCache.getPackageList()
     #packageCache.updatePackages()
-    rdfPackages = packageCache.getRdfPackages()
-    import ipdb; ipdb.set_trace()
+    #rdfPackages = packageCache.getRdfPackages()
+    packageCache.updateRdfCache()
+    print "Done!"
