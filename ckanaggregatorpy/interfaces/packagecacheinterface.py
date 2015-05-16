@@ -25,6 +25,11 @@ class PackageCacheInterface(object):
         else:
             return self.loadFile(self.rdfPackagesRdfResourcesOnlyFile)
 
+    def getPackagesStream(self):
+        for f in os.listdir(self.packagesFolder):
+            packageFile = os.path.join(self.packagesFolder, f)
+            yield self.loadFile(packageFile)
+
     def updateRdfPackagesRdfResourcesOnly(self):
         rdfPackages = self.getRdfPackages()
         rdfFormats = ckanaggregatorpy.assets.formats.RDF
