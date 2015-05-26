@@ -1,14 +1,14 @@
+import os
+
 import ckanaggregatorpy.datagov.package_cache
 import ckanaggregatorpy.datahubio.package_cache
 import ckanaggregatorpy.pdeu.package_cache
 import ckanaggregatorpy.opencanada.package_cache
 
-try:
-    import cPickle as pickle
-except:
-    import pickle
+from ckanaggregatorpy.interfaces.loadsaveinterface import LoadSaveInterface
 
-class CkanQuery(object):
+class CkanQuery(LoadSaveInterface):
+    formatsFile = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../data/formats.set"))
     ckanCaches = [
             ckanaggregatorpy.datagov.package_cache.PackageCache(),
             ckanaggregatorpy.datahubio.package_cache.PackageCache(),
@@ -26,6 +26,16 @@ class CkanQuery(object):
             ckanApiUrl = ckanCache.ckanApiUrl
             #Prefixes are mapped to name in ckan_catalog table in LODStats_WWW
             results.append({'rdfpackages': rdfpackages, 'prefix': prefix, 'ckanApiUrl': ckanApiUrl})
+        return results
+
+    def getCsvPackages(self):
+        results = []
+        for ckanCache in self.ckanCaches:
+            csvpackages = ckanCache.getCsvPackages()
+            prefix = ckanCache.prefix
+            ckanApiUrl = ckanCache.ckanApiUrl
+            #Prefixes are mapped to name in ckan_catalog table in LODStats_WWW
+            results.append({'csvpackages': csvpackages, 'prefix': prefix, 'ckanApiUrl': ckanApiUrl})
         return results
 
     def getRdfPackagesRdfResourcesOnlyNormalized(self):
@@ -53,6 +63,22 @@ class CkanQuery(object):
             return "N/A"
         else:
             return string.encode('utf-8')
+
+    def getFormats(self):
+        if(not os.path.isfile(self.formatsFile)):
+            self.updateFormats()
+            return self.loadFile(self.formatsFile)
+        else:
+            return self.loadFile(self.formatsFile)
+
+    def updateFormats(self):
+        formats = set()
+        for ckanCache in self.ckanCaches:
+            packages = ckanCache.getPackagesStream()
+            for package in packages:
+                for resource in package['resources']:
+                    formats.add(resource['format'])
+        self.saveFile(self.formatsFile, formats)
 
     def getLicensesCount(self):
         for ckanCache in self.ckanCaches:
@@ -91,5 +117,6 @@ if __name__ == "__main__":
     ckanQuery = CkanQuery()
     #rdfPackages = ckanQuery.getRdfPackagesRdfResourcesOnly()
     #ckanQuery.dumpRdfPackagesRdfResourcesOnly()
-    ckanQuery.getLicensesCount()
-    print "done"
+    #ckanQuery.getLicensesCount()
+    csvPackages = ckanQuery.getCsvPackages()
+    import ipdb; ipdb.set_trace()

@@ -1,10 +1,11 @@
 import requests
 import os
 import time
-import pickle
 import codecs
+from ckanaggregatorpy.interfaces.loadsaveinterface import LoadSaveInterface
+import ckanaggregatorpy.assets.formats
 
-class PackageCacheInterface(object):
+class PackageCacheInterface(LoadSaveInterface):
     packageListFile = None
     packagesFolder = None
     rdfPackagesFolder = None
@@ -17,6 +18,7 @@ class PackageCacheInterface(object):
         self.rdfPackagesFolder = os.path.join(self.cacheFolder, "rdfPackages")
         self.rdfPackagesFile = os.path.join(self.cacheFolder, "rdfPackages.dump")
         self.rdfPackagesRdfResourcesOnlyFile = os.path.join(self.cacheFolder, "rdfPackagesRdfResourcesOnly.dump")
+        self.csvPackagesFile = os.path.join(self.cacheFolder, "csvPackages.dump")
 
     def getRdfPackagesRdfResourcesOnly(self):
         if(not os.path.isfile(self.rdfPackagesRdfResourcesOnlyFile)):
@@ -50,9 +52,27 @@ class PackageCacheInterface(object):
 
     def updateRdfPackages(self):
         rdfFormats = ckanaggregatorpy.assets.formats.RDF
+        self.updateXxxPackages(rdfFormats, self.rdfPackagesFile)
+
+    def getCsvPackages(self):
+        if(not os.path.isfile(self.csvPackagesFile)):
+            self.updateCsvPackages()
+            return self.loadFile(self.csvPackagesFile)
+        else:
+            return self.loadFile(self.csvPackagesFile)
+
+    def updateCsvPackages(self):
+        csvFormats = ckanaggregatorpy.assets.formats.CSV
+        self.updateXxxPackages(csvFormats, self.csvPackagesFile)
+
+    def updateXxxPackages(self, filterArray, location):
+        """
+            Filter the packages according to 'format' param
+            e.g. filterArray = ['csv', 'csV', 'CSv']
+        """
         packageList = self.getPackageList()
         numberOfPackages = len(packageList)
-        rdfPackages = []
+        packages = []
         for num, packageId in enumerate(packageList):
             print("Querying package %d out of %d" % (num + 1, numberOfPackages))
             packageFile = os.path.join(self.packagesFolder, packageId)
@@ -62,11 +82,11 @@ class PackageCacheInterface(object):
             else:
                 package = self.loadFile(packageFile)
                 for resource in package['resources']:
-                    if(resource['format'] in rdfFormats):
-                        print("Adding package %s to RDF cache" % (packageId))
-                        rdfPackages.append(package)
+                    if(resource['format'] in filterArray):
+                        print("Adding package %s to filtered cache" % (packageId))
+                        packages.append(package)
                         break
-        self.saveFile(self.rdfPackagesFile, rdfPackages)
+        self.saveFile(location, packages)
 
     def updatePackages(self):
         packageList = self.getPackageList()
@@ -110,30 +130,6 @@ class PackageCacheInterface(object):
         else:
             return self.loadFile(self.packageListFile)
 
-    def saveFile(self, filepath, obj):
-        #provide full path to the file as filepath and obj to save
-        try:
-            file = open(filepath, 'wb')
-            pickle.dump(obj, file, protocol=pickle.HIGHEST_PROTOCOL)
-            file.close()
-        except BaseException as e:
-            print("Could not save the file %s because %s" % (filepath, str(e)))
-
-    def saveFileRaw(self, filepath, string):
-        try:
-            file = codecs.open(filepath, mode='w', encoding="utf-8")
-            string = unicode(string, errors='replace')
-            file.write(string)
-            file.close()
-        except BaseException as e:
-            print("Could not save the file %s because %s" % (filepath, str(e)))
-
-    def loadFile(self, filepath):
-        #provide full path to the file as filepath
-        file = open(filepath, 'rb')
-        obj = pickle.load(file)
-        file.close()
-        return obj
 
     def updatePackageList(self):
         packageList = self.ckanClient.package_list()
