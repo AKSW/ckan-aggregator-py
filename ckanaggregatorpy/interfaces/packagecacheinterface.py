@@ -2,6 +2,7 @@ import requests
 import os
 import time
 import codecs
+import random
 from ckanaggregatorpy.interfaces.loadsaveinterface import LoadSaveInterface
 import ckanaggregatorpy.assets.formats
 
@@ -19,6 +20,7 @@ class PackageCacheInterface(LoadSaveInterface):
         self.rdfPackagesFile = os.path.join(self.cacheFolder, "rdfPackages.dump")
         self.rdfPackagesRdfResourcesOnlyFile = os.path.join(self.cacheFolder, "rdfPackagesRdfResourcesOnly.dump")
         self.csvPackagesFile = os.path.join(self.cacheFolder, "csvPackages.dump")
+        self.csvRandomSelection15 = os.path.join(self.cacheFolder, "csvRandomSelection15.dump")
 
     def getRdfPackagesRdfResourcesOnly(self):
         if(not os.path.isfile(self.rdfPackagesRdfResourcesOnlyFile)):
@@ -53,6 +55,30 @@ class PackageCacheInterface(LoadSaveInterface):
     def updateRdfPackages(self):
         rdfFormats = ckanaggregatorpy.assets.formats.RDF
         self.updateXxxPackages(rdfFormats, self.rdfPackagesFile)
+
+    def getCsvPackagesRandom15(self):
+        if(not os.path.isfile(self.csvRandomSelection15)):
+            self.updateCsvPackagesRandom15()
+            return self.loadFile(self.csvRandomSelection15)
+        else:
+            return self.loadFile(self.csvRandomSelection15)
+
+    def updateCsvPackagesRandom15(self):
+        """
+            This function saves selection to the file (for the gold standard creation)
+        """
+        csvPackagesRandom15 = self.getCsvPackagesRandom(15)
+        self.saveFile(self.csvRandomSelection15, csvPackagesRandom15)
+
+    def getCsvPackagesRandom(self, number):
+        csvpackages = self.getCsvPackages()
+        return self.getPackagesRandom(csvpackages, number)
+
+    def getPackagesRandom(self, packages, number):
+        """
+            Returns a "number" of random packages from the array :)
+        """
+        return random.sample(packages, number)
 
     def getCsvPackages(self):
         if(not os.path.isfile(self.csvPackagesFile)):

@@ -9,3 +9,4 @@ mkdir data/datagov/rdfPackages
 mkdir data/datahubio
 mkdir data/datahubio/packages
 mkdir data/datahubio/rdfPackages
+mkdir data/csvresources/propertymatchingdata

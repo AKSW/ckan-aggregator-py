@@ -6,7 +6,7 @@ import ckanaggregatorpy.opencanada as opencanada
 class PackageCache(ckanaggregatorpy.interfaces.PackageCacheInterface):
     cacheFolder = opencanada.cacheFolder
     ckanClient = opencanada.ckanClient
-    prefix = "opencanadaca"
+    prefix = "opencanada"
     ckanApiUrl = opencanada.ckanApiUrl
     ckanBaseUrl = opencanada.ckanBaseUrl
 

@@ -1,14 +1,19 @@
 import os
+import requests
+import re
 
 import ckanaggregatorpy.datagov.package_cache
 import ckanaggregatorpy.datahubio.package_cache
 import ckanaggregatorpy.pdeu.package_cache
 import ckanaggregatorpy.opencanada.package_cache
+import ckanaggregatorpy.assets.formats
 
 from ckanaggregatorpy.interfaces.loadsaveinterface import LoadSaveInterface
 
 class CkanQuery(LoadSaveInterface):
     formatsFile = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../data/formats.set"))
+    csvPropertyMatchingFile= os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../data/propertymatchingdata.pickle"))
+    propertyMatchingDataFolder = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../data/csvresources/propertymatchingdata"))
     ckanCaches = [
             ckanaggregatorpy.datagov.package_cache.PackageCache(),
             ckanaggregatorpy.datahubio.package_cache.PackageCache(),
@@ -113,10 +118,105 @@ class CkanQuery(LoadSaveInterface):
                 f.write(csvStringLicense + "\n")
             f.close()
 
+    def getCsvRandomSelection15(self):
+        """
+            This function is used for selecting a set of 15 random csv packages
+            from each available data catalogue and saving it in the cache
+        """
+        results = []
+        for ckanCache in self.ckanCaches:
+            csvPackagesRandom15 = ckanCache.getCsvPackagesRandom15()
+            #Create top property pointing to the first CSV file from the package
+            for i, package in enumerate(csvPackagesRandom15):
+                package = self.outlineTopCsv(package)
+            prefix = ckanCache.prefix
+            ckanApiUrl = ckanCache.ckanApiUrl
+            results.append({'csvpackagesrandom15': csvPackagesRandom15, 'prefix': prefix, 'ckanApiUrl': ckanApiUrl})
+        return results
+
+    def outlineTopCsv(self, package):
+        for j,resource in enumerate(package['resources']):
+            if(resource['format'] in ckanaggregatorpy.assets.formats.CSV):
+                package['topCsvLink'] = resource['url']
+                package['topCsvIndex'] = j
+                break
+        return package
+
+    def getCsvPackageListForPropertyMatching(self):
+        if(not os.path.isfile(self.csvPropertyMatchingFile)):
+            self.updateCsvPackageListForPropertyMatching()
+            return self.loadFile(self.csvPropertyMatchingFile)
+        else:
+            return self.loadFile(self.csvPropertyMatchingFile)
+
+    def updateCsvPackageListForPropertyMatching(self):
+        """
+            Iterate through the csv selection from getCsvRandomSelection15
+            Filter out invalid csv resources (404, zipped, etc.)
+            save proper 15 resources to a file
+        """
+        csvEndpoints = self.getCsvRandomSelection15()
+        csvEndpointsFiltered = []
+        for csvEndpoint in csvEndpoints:
+            prefix = csvEndpoint['prefix']
+            ckanApiUrl = csvEndpoint['ckanApiUrl']
+            csvPackages = csvEndpoint['csvpackagesrandom15']
+            ckanCache = eval("ckanaggregatorpy.%s.package_cache.PackageCache()"%prefix)
+            #topCsvLink = csvPackage['topCsvLink']
+            #topCsvIndex = csvPackage['topCsvIndex']
+
+            for i, csvPackage in enumerate(csvPackages):
+                r = requests.Request()
+                r.status_code = 400
+                while(not r.status_code == requests.codes.ok):
+                    #only http protocol
+                    while(not csvPackage['topCsvLink'].startswith("http")):
+                        csvPackage = self.getRandomUniqueCsv(ckanCache, csvPackages)
+                    #should have .csv extension
+                    csvExtensionRegex = re.compile("\.csv", re.IGNORECASE)
+                    while(not csvExtensionRegex.search(csvPackage['topCsvLink'])):
+                        csvPackage = self.getRandomUniqueCsv(ckanCache, csvPackages)
+                    try:
+                        r = requests.get(csvPackage['topCsvLink'], timeout=1)
+                        if(not r.status_code == requests.codes.ok):
+                            csvPackage = self.getRandomUniqueCsv(ckanCache, csvPackages)
+                    except requests.exceptions.ConnectionError as connectionError:
+                        print(str(connectionError))
+                        csvPackage = self.getRandomUniqueCsv(ckanCache, csvPackages)
+                    except requests.exceptions.ReadTimeout as readTimeout:
+                        print(str(readTimeout))
+                        csvPackage = self.getRandomUniqueCsv(ckanCache, csvPackages)
+                csvPackages[i] = csvPackage
+            csvEndpointsFiltered.append({'csvpackagesrandom15': csvPackages, 'prefix': prefix, 'ckanApiUrl': ckanApiUrl})
+
+        #Save filtered csv files to the file!
+        self.saveFile(self.csvPropertyMatchingFile, csvEndpointsFiltered)
+        print "Done!"
+
+    def getRandomUniqueCsv(self, ckanCache, packages):
+        package = None
+        while(package == None):
+            package = self.getOneRandomUniqueCsv(ckanCache, packages)
+        return package
+
+    def getOneRandomUniqueCsv(self, ckanCache, packages):
+        newPackage = ckanCache.getCsvPackagesRandom(1)[0]
+        unique = True
+        for package in packages:
+            if(package['id'] == newPackage['id']):
+                unique = False
+
+        if(unique):
+            return self.outlineTopCsv(newPackage)
+        else:
+            return None
+
 if __name__ == "__main__":
     ckanQuery = CkanQuery()
     #rdfPackages = ckanQuery.getRdfPackagesRdfResourcesOnly()
     #ckanQuery.dumpRdfPackagesRdfResourcesOnly()
     #ckanQuery.getLicensesCount()
-    csvPackages = ckanQuery.getCsvPackages()
+    #csvPackages = ckanQuery.getCsvPackages()
+    #csvPackagesRandom15 = ckanQuery.getCsvRandomSelection15()
+    csvs = ckanQuery.getCsvPackageListForPropertyMatching()
     import ipdb; ipdb.set_trace()
