@@ -1,12 +1,9 @@
 #!/bin/bash
-mkdir data/pdeu
-mkdir data/pdeu/packages
-mkdir data/pdeu/rdfPackages
-mkdir data/datagov
-mkdir data/datagov/pages
-mkdir data/datagov/packages
-mkdir data/datagov/rdfPackages
-mkdir data/datahubio
-mkdir data/datahubio/packages
-mkdir data/datahubio/rdfPackages
-mkdir data/csvresources/propertymatchingdata
+mkdir -p data/pdeu/packages
+mkdir -p data/pdeu/rdfPackages
+mkdir -p data/datagov/pages
+mkdir -p data/datagov/packages
+mkdir -p data/datagov/rdfPackages
+mkdir -p data/datahubio/packages
+mkdir -p data/datahubio/rdfPackages
+mkdir -p data/csvresources/propertymatchingdata

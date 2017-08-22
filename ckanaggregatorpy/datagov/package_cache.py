@@ -16,7 +16,7 @@ class PackageCache(ckanaggregatorpy.interfaces.PackageCacheInterface):
     cacheFolder = datagov.cacheFolder
     pagesFolder = os.path.join(datagov.cacheFolder, "pages")
     datagovPageUrl = "http://catalog.data.gov/dataset?page="
-    datagovNumberOfPages = 6705 # this number has to be updated manually
+    datagovNumberOfPages = 9772 # this number has to be updated manually
     ckanClient = datagov.ckanClient
     prefix = "datagov"
     ckanApiUrl = datagov.ckanApiUrl
@@ -28,7 +28,7 @@ class PackageCache(ckanaggregatorpy.interfaces.PackageCacheInterface):
     def updatePackageList(self):
         """
             ckanclient.package_list() does not work for data.gov portal
-            we have to fetch all the pages from the web portal 
+            we have to fetch all the pages from the web portal
             and then scrape package ids from them
         """
         self.updateDataGovPages()
@@ -52,9 +52,9 @@ class PackageCache(ckanaggregatorpy.interfaces.PackageCacheInterface):
             soup = BeautifulSoup(page)
             for dataset in soup.find_all(href=re.compile("dataset/")):
                 datasetIds.append(dataset["href"].split("/")[-1])
-         
+
         self.saveFile(self.packageListFile, datasetIds)
-            
+
     def updateDataGovPages(self):
         """
             Saves all the pages from the data.gov portal to data/datagov/pages folder
