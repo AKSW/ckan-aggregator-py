@@ -72,3 +72,8 @@ Usage
 Here we demonstrate usage of *ckan-aggregator-py* for scraping Open Leipzig data portal.
 For this example, we provide [open-leipzig.py](./open-leipzig.py) script.
 Please read inline comments for further pointers.
+
+To run example simply execute it:
+```
+python open-leipzig.py
+```
