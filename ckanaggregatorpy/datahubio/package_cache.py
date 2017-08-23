@@ -12,11 +12,3 @@ class PackageCache(ckanaggregatorpy.interfaces.PackageCacheInterface):
 
     def __init__(self):
         super(self.__class__, self).__init__()
-
-if __name__ == "__main__":
-    packageCache = PackageCache()
-    #pkgList = packageCache.getPackageList()
-    #packageCache.updatePackages()
-    #rdfPackages = packageCache.getRdfPackagesRdfResourcesOnly()
-    packageCache.updateRdfCache()
-    print "Done!"

@@ -72,11 +72,3 @@ class PackageCache(ckanaggregatorpy.interfaces.PackageCacheInterface):
             f.write(r.content)
             f.close()
             time.sleep(0.5)
-
-if __name__ == "__main__":
-    packageCache = PackageCache()
-    #pkgList = packageCache.getPackageList()
-    #packageCache.updatePackages()
-    #rdfPackages = packageCache.getRdfPackages()
-    packageCache.updateRdfCache()
-    print "Done!"
